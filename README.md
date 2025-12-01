@@ -1,52 +1,74 @@
-InvoiceShield – Multi-Agent AI System .
-An automated AI workflow that detects invoice fraud, analyzes anomalies, and generates investigation reports using a coordinated team.
+InvoiceShield: Google ADK + Gemini MultiAgent AI System
 
-The Google Agent Development Kit (ADK) was used to create the multiagent AI system known as InvoiceShield.  
-Invoice processing processes like ingestion, research, anomaly identification, reconciliation, investigation, and communication are all automated.
+The Google Agent Development Kit (ADK) and Gemini 2.5 Flash Lite were used to create the simple, modular multiagent system known as InvoiceShield.  
+Within a coordinated agent pipeline, it automates invoice analysis via ingestion, research, anomaly identification, reconciliation, investigation, and communication.
 
-This project shows how ADK agents, LoopAgents, and validation logic may be used to represent enterprise-style financial procedures.
-
-
-
- Features
-
- uses AI and a vendor watchlist tool to normalize and ingest invoice data and investigate fraud trends.  
- uses a LoopAgent with validation to find anomalies  
- compares payments to invoices  
- produces reports from investigations  
- generates summary of notifications  
- Completely coordinated by a single primary agent  
+This approach collects research ideas for fraud and anomaly investigation using a single external tool: google_search.
 
 
 
- The Architecture of Agents
+ Overview of the Project
+
+Businesses deal with thousands of invoices. Manual verification is laborious and prone to mistakes.  
+Using a fully orchestrated pipeline, InvoiceShield shows how several AI agents may work together to handle these tedious financial validation chores.
+
+The system is easy to use, scalable, and perfect for instructional demos or Kaggle ADK submissions.
+
+
+The Architecture of Agents
 
  1. data_ingest_agent
-creates a uniform structure for vendor, bank, ERP, and invoice data.
+ cleans and normalizes any incoming ERP-like or invoicing data.
+ creates a single JSON structure from all inputs.
 
- 2. Research Agent
-uses the vendor watchlist tool to collect trends about invoice fraud, compliance, vendor risk, and anomaly heuristics.
+ 2. Research Agent  
+ uses the ONLY tool, google_search.  
+ gathers information about: tendencies of invoicing fraud  
+   expectations for compliance  
+   signs of vendor risk  
+   Heuristics for anomalies  
 
-Third. anomaly_detector (LoopAgent)
-iteratively scores anomalies until the results are approved by the `AnomalyValidationChecker`.
+ 3. LoopAgent's anomaly_detector
+ rates bills for potential irregularities on a regular basis.
+ For every loop cycle, a helper agent (`anomaly_detector_iteration`) is used.
 
-Four. reconciliation_agent
-finds exceptions and simulates linking invoices to payments.
+ 4. Only anomaly scores ≥ 0.75 are approved by AnomalyValidationChecker.
+ Reruns are required until a high level of confidence is reached.
 
-Fifth. investigation_agent
-generates Markdown investigation case files that include suggested actions and risk assessments.
+ 5. reconciliation_agent
+ compares payment information with invoice amounts, vendors, dates, and references.
+ generates explanations and match confidence.
 
-Sixth. communications_agent
-produces audit-style communication outputs and final alarms.
+ 6. Investigation Agent
+ generates a Markdown-style synopsis of the following: problem, risk, anomalous evidence, suggested actions  
 
-Seven. interactive_finops_agent
-the primary orchestrator that manages the entire six-step workflow.
+ 7. communications_agent
+ produces long-form communication messages and summaries in the notification style.
+
+ 8. The Main Orchestrator, interactive_finops_agent
+oversees the entire pipeline:
+
+1. Consume 2. Investigate  
+3. The loop for anomaly detection  
+4. Making amends  
+5. Summary of the investigation 6. Communication results  
 
 
 
-🛠️ Utilized Technology
+ 🔧 Utilized Tools
 
-Agent Development Kit (ADK) from Google
-Models of Gemini (2.5 Flash Lite)
-ValidationChecker + LoopAgent
-Python
+In the entire project, there is only one tool:
+
+Google Search
+used just by research_agent to collect signals and trends in the real world.
+
+No databases.  
+No third-party APIs.  
+No connectors.  
+One tidy research instrument.
+
+
+
+ 📦 Google ADK (Agent Development Kit) Technologies Employed
+ Workflow for Gemini 2.5 Flash Lite Python LoopAgent Validation
+
