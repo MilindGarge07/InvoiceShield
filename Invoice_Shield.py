@@ -4,51 +4,36 @@ from google.adk.agents import BaseAgent, LoopAgent
 from google.adk.tools import Tool
 from google.genai.types import EventActions
 
-
-
 RETRY_CONFIG = {"max_retries": 2, "backoff_seconds": 1}
 
-# Tools (Interfaces / Stubs)
-db_connector = Tool(name="db_connector")
-bank_api_tool = Tool(name="bank_api_tool")
-vendor_watchlist = Tool(name="vendor_watchlist")
-save_report_to_file = Tool(name="save_report_to_file")
-send_notification = Tool(name="send_notification")
+google_search = Tool(name="google_search")
 
-# Research Agent
 research_agent = Agent(
     name="research_agent",
     model=Gemini(model="gemini-2.5-flash-lite", retry_options=RETRY_CONFIG),
-    description="""
-    Research Agent that gathers information related to:
-    - invoice fraud patterns
-    - regulatory compliance
-    - vendor risk behaviors
-    - anomaly heuristics and ML feature recommendations
-    """,
+    description="Researches invoice fraud patterns, compliance rules, vendor behaviors, and anomaly heuristics using google_search.",
     instruction="""
-    Produce structured intelligence for fraud detection:
-    - Key fraud indicators
-    - Deterministic rules
-    - ML features
-    - Vendor risk signals
-    Provide all output as JSON including citations.
+    Use google_search to gather intelligence on:
+    - invoice fraud indicators
+    - regulatory compliance expectations
+    - vendor risk signals
+    - common anomaly patterns
+    Output should be structured JSON with references.
     """,
-    tools=[vendor_watchlist]
+    tools=[google_search]
 )
 
-# Data Ingestion Agent
 data_ingest_agent = Agent(
     name="data_ingest_agent",
     model=Gemini(model="gemini-2.5-flash-lite", retry_options=RETRY_CONFIG),
-    description="Normalizes ERP, invoice, vendor and bank data into a canonical format.",
+    description="Normalizes incoming invoice data into a unified format.",
     instruction="""
-    Ingest all provided invoice feeds, sanitize formats, unify fields, and export canonical JSON entries.
+    Take any provided invoice or ERP-like data and convert it into a canonical JSON structure.
+    Ensure fields are cleaned, standardized, and consistent.
     """,
-    tools=[db_connector, bank_api_tool]
+    tools=[]
 )
 
-# Validation Checker
 class AnomalyValidationChecker(BaseAgent):
     def __init__(self, threshold=0.75):
         super().__init__(name="AnomalyValidationChecker")
@@ -60,72 +45,66 @@ class AnomalyValidationChecker(BaseAgent):
             return EventActions(escalate=True, message="Validated")
         return None
 
-# Anomaly Detector (LoopAgent)
 anomaly_detector = LoopAgent(
     name="anomaly_detector",
     model=Gemini(model="gemini-2.5-flash-lite", retry_options=RETRY_CONFIG),
-    description="Detects anomalies using heuristics + ML and validates confidence via LoopAgent.",
+    description="Performs anomaly scoring using heuristics and ML-like reasoning.",
     loop_body_agent=Agent(
         name="anomaly_detector_iteration",
         model=Gemini(model="gemini-2.5-flash-lite"),
-        description="Single iteration of scoring and anomaly detection."
+        description="Single iteration of anomaly scoring."
     ),
     validation_checker=AnomalyValidationChecker(threshold=0.75),
-    tools=[research_agent, db_connector]
+    tools=[research_agent]
 )
 
-# Reconciliation Agent
 reconciliation_agent = Agent(
     name="reconciliation_agent",
     model=Gemini(model="gemini-2.5-flash-lite"),
-    description="Matches invoices to payments and creates exception cases.",
+    description="Matches invoices to payments and identifies mismatches.",
     instruction="""
-    Perform exact and fuzzy invoice-payment matches. Produce:
-    - match_confidence 
-    - matched/unmatched status
-    - evidence summary
+    Compare invoice amounts, vendor names, dates, and reference IDs with provided payment data.
+    Output:
+    - matched or unmatched
+    - confidence score
+    - short explanation
     """,
-    tools=[db_connector, bank_api_tool]
+    tools=[]
 )
 
-# Investigation Agent 
 investigation_agent = Agent(
     name="investigation_agent",
     model=Gemini(model="gemini-2.5-flash-lite"),
-    description="Creates human-friendly case files for suspicious invoices.",
+    description="Creates a human-readable case summary for suspicious invoices.",
     instruction="""
-    Produce a Markdown case report including:
+    Compile a Markdown report with:
     - summary of issue
-    - evidence list
-    - risk rating
-    - recommended actions
-    Save report and notify reviewers.
+    - risk explanation
+    - anomaly evidence
+    - recommended next steps
     """,
-    tools=[save_report_to_file, send_notification]
+    tools=[]
 )
 
-# Communications Agent
 comms_agent = Agent(
     name="comms_agent",
     model=Gemini(model="gemini-2.5-flash-lite"),
-    description="Generates notifications and audit reports.",
-    instruction="Create short alerts for teams and long-form audit reports."
+    description="Generates notification-style summaries and audit messages.",
+    instruction="Produce short alerts and long-form communication summaries."
 )
 
-#  Main Orchestrator 
 interactive_finops_agent = Agent(
     name="interactive_finops_agent",
     model=Gemini(model="gemini-2.5-flash-lite", retry_options=RETRY_CONFIG),
-    description="Coordinates the entire InvoiceShield workflow end-to-end.",
+    description="Coordinates the full InvoiceShield workflow.",
     instruction="""
-    Run full pipeline:
-    1. Ingest data
-    2. Conduct research
-    3. Perform anomaly detection (LoopAgent)
-    4. Reconcile payments
-    5. Create investigation case
-    6. Send audit reports & notifications
-    Always include evidence bundles and ensure auditability.
+    Execute the full pipeline:
+    1. Ingest invoice data
+    2. Run research_agent
+    3. Perform anomaly detection using LoopAgent
+    4. Reconcile invoice with payment info
+    5. Generate investigation summary
+    6. Produce communication outputs
     """,
     sub_agents=[
         data_ingest_agent,
@@ -135,5 +114,5 @@ interactive_finops_agent = Agent(
         investigation_agent,
         comms_agent
     ],
-    tools=[db_connector, bank_api_tool, save_report_to_file, send_notification]
+    tools=[google_search]
 )
